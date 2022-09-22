@@ -8,7 +8,7 @@ import { styled } from '@mui/material/styles';
 import { makeStyles } from '@mui/styles';
 
 import { fCurrency } from '../../../utils/formatNumber';
-import {IMG_URL} from '../../../utils/common';
+// import {IMG_URL} from '../../../utils/common';
 
 import {TypedDispatch} from '../../../redux/store/store';
 import { addToCart } from '../../../redux/action/cart';
@@ -50,7 +50,8 @@ export default function ShopProductCard({ product }: any) {
   return (
     <Card>
       <Box sx={{ pt: '100%', position: 'relative' }}>
-        <ProductImgStyle alt={name} src={IMG_URL + image} />
+        {/* <ProductImgStyle alt={name} src={IMG_URL + image} /> */}
+        <ProductImgStyle alt={name} src={image} />
       </Box>
 
       <Stack spacing={2} sx={{ p: 3 }}>

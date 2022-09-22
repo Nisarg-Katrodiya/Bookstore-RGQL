@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@apollo/client": "^3.6.9",
     "@emotion/react": "^11.9.3",
     "@emotion/styled": "^11.9.3",
     "@faker-js/faker": "^7.3.0",
@@ -27,6 +28,7 @@
     "axios": "^0.27.2",
     "cross-env": "^7.0.3",
     "formik": "^2.2.9",
+    "graphql": "^16.6.0",
     "lodash": "^4.17.21",
     "numeral": "^2.0.6",
     "prop-types": "^15.8.1",

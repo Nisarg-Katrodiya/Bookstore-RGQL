@@ -2,6 +2,7 @@ import React, {ReactElement, FC} from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
+import { useMutation, gql } from "@apollo/client";
 
 import { 
   Grid, 
@@ -11,13 +12,13 @@ import {
   Divider,
   InputLabel, TextField,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { styled } from '@mui/material/styles';
 import { makeStyles } from "@mui/styles";
 
-import {createUser} from '../redux/action/user';
+import {setLoginUser} from '../redux/action/user';
 import {TypedDispatch} from '../redux/store/store';
-import { CREATE_USER_ERROR } from '../utils/constant';
 
 const Item = styled(Paper)(({ theme }: any) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#FFF',
@@ -60,54 +61,74 @@ const useStyle = makeStyles(() => ({
 }));
 
 type userDataType = {
-  firstname: string,
-  lastname: string,
-  email: string,
-  password: string,
+  firstname?: string,
+  lastname?: string,
+  email?: string,
+  password?: string,
   password_c?: string,
 }
 
 const validate = (values: userDataType) => {
-  let errors: userDataType = {
-    firstname: '',
-    lastname: '',
-    email: '',
-    password: '',
-    password_c: '',
-  };
+  let errors: any = {};
 
   if(!values.firstname) {
-    errors.firstname = 'Required';
+    errors['firstname'] = 'Required';
   } else if (values.firstname.length < 0) {
-    errors.firstname = 'Firstname can not be null';
+    errors['firstname'] = 'Firstname can not be null';
   }
   if(!values.lastname) {
-    errors.lastname = 'Required';
+    errors['lastname'] = 'Required';
   } else if (values.lastname.length < 0) {
-    errors.lastname = 'Lastname can not be null';
+    errors['lastname'] = 'Lastname can not be null';
   }
   if(!values.email) {
-    errors.email = 'Required';
+    errors['email'] = 'Required';
   } else if ((!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email))) {
-    errors.email = 'Invalid email format';
+    errors['email'] = 'Invalid email format';
   }
   if(!values.password) {
-    errors.password = 'Required';
+    errors['password'] = 'Required';
   } else if (values.password.length < 8 && values.password.length > 16) {
-    errors.password = 'Must be atleast more then 8 characters or less then 16 characters';
+    errors['password'] = 'Must be atleast more then 8 characters or less then 16 characters';
   }
   if(!values.password_c) {
-    errors.password_c = 'Required';
+    errors['password_c'] = 'Required';
   } else if (values.password_c !== values.password) {
-    errors.password_c = 'Conform password is note same as password';
+    errors['password_c'] = 'Conform password is note same as password';
   }
 
   return errors;
 }
 
-const Login: FC<any> = (): ReactElement => {
+const USERREGISTER_QUERY = gql`
+  mutation addUser(
+    $firstname: String,
+    $lastname: String,
+    $email: String,
+    $password: String,
+    ) {
+  addUser(
+    firstname: $firstname,
+    lastname: $lastname,
+    email: $email,
+    password: $password,,
+  ) {
+    id
+    token
+    firstname
+    lastname
+    email
+    role
+  }
+}
+`;
+
+const Register: FC<any> = (): ReactElement => {
 
   const dispatch = useDispatch<TypedDispatch>();
+  const [addUser, { data, loading, error }] = useMutation(USERREGISTER_QUERY);
+  if (error) console.log("🚀 ~ file: LoginForm.tsx ~ line 92 ~ handlelogin ~ error", error);
+
   const classes = useStyle();
   const navigate = useNavigate();
 
@@ -121,9 +142,9 @@ const Login: FC<any> = (): ReactElement => {
 
   const handleRegister = async (values: userDataType) => {
     delete values?.password_c;
-    const result: any = await dispatch(createUser(values));
-    if (result.type === CREATE_USER_ERROR) {}
-    navigate('/');
+    addUser({
+      variables: values
+    })
   }
 
   const formik = useFormik({
@@ -131,6 +152,11 @@ const Login: FC<any> = (): ReactElement => {
     validate,
     onSubmit: async values => handleRegister(values),    
   });
+
+  if (data && data.addUser) {
+    dispatch(setLoginUser(data.addUser));
+    navigate('/');
+  }
 
   return (
     <>
@@ -227,7 +253,7 @@ const Login: FC<any> = (): ReactElement => {
                   </Grid>
                   <Grid item xs={12}>
                     <Button variant="contained" type='submit' className={classes.buttonStyle}>
-                        Register
+                        Register {loading && <CircularProgress color="inherit" />}
                     </Button>
                   </Grid>
                 </form>
@@ -240,4 +266,4 @@ const Login: FC<any> = (): ReactElement => {
   );
 };
 
-export default Login;
+export default Register;

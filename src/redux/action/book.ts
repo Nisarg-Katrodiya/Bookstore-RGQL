@@ -19,38 +19,32 @@ const fetchSingleBookRequest = () => ({ type: GET_SINGLE_BOOK_SUCCESS });
 const fetchSingleBookSuccess = (payload: any) => ({ type: GET_SINGLE_BOOK_REQUEST, payload });
 const fetchSingleBookFailure = (errors: any) => ({ type: GET_SINGLE_BOOK_ERROR, errors });
 
-export const getSingleBook = (id: string) => async(dispatch: any) =>
+export const getSingleBook = (data: any) => async(dispatch: any) =>
   new Promise((resolve: any, reject: any) => {
-    dispatch(fetchSingleBookRequest());
-    apiInstance
-      .get(`product/${id}`)
-      .then((res) => {
-        dispatch(fetchSingleBookSuccess(res.data.data));
-        resolve(res.data.data);
-      })
-      .catch((e) => {
-        dispatch(fetchSingleBookFailure(e?.response?.data?.message));
-        reject();
-      });
+    try {
+      dispatch(fetchSingleBookRequest());
+      dispatch(fetchSingleBookSuccess(data));
+      resolve();
+    } catch (error: any) {
+      dispatch(fetchSingleBookFailure(error?.message));
+      reject();
+    }
   });
 
 const fetchBookListRequest = () => ({ type: GET_BOOK_LIST_REQUEST });
 const fetchBookListSuccess = (payload: any) => ({ type: GET_BOOK_LIST_SUCCESS, payload });
 const fetchBookListFailure = (message: string) => ({ type: GET_BOOK_LIST_ERROR, message });
 
-export const fetchBook = () => async(dispatch: any) => 
+export const fetchBook = (data: any) => async(dispatch: any) => 
   new Promise((resolve: any, reject: any) => {
-    dispatch(fetchBookListRequest());
-    apiInstance
-      .get('product/list')
-      .then((res) => {
-        dispatch(fetchBookListSuccess(res.data.data));
-        resolve(res.data.data);
-      })
-      .catch((e) => {
-        dispatch(fetchBookListFailure(e?.response?.data?.message));
-        reject();
-      });
+    try {
+      dispatch(fetchBookListRequest());
+      dispatch(fetchBookListSuccess(data));
+      resolve();
+    } catch (error: any) {
+      dispatch(fetchBookListFailure(error?.message));
+      reject();
+    }
   });
 
 const addBookRequest = () => ({ type: ADD_BOOK_REQUEST });

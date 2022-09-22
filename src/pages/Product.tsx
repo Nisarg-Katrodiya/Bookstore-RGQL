@@ -2,6 +2,7 @@
 import React, {useEffect, useState} from 'react';
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
+import { useQuery, gql } from "@apollo/client";
 
 import {
 	Box,
@@ -22,7 +23,7 @@ import { makeStyles } from '@mui/styles';
 
 import {TypedDispatch} from '../redux/store/store';
 import { fetchBook } from '../redux/action/book';
-import { GET_BOOK_LIST_ERROR } from '../utils/constant';
+import Loader from '../components/Loader';
 
 const useStyles = makeStyles((theme: any) => ({
 	inputStyle: {
@@ -149,23 +150,39 @@ const EnhancedTableToolbar = () => {
   );
 };
 
+const BOOKS_QUERY = gql`
+  query getBooks {
+    books {
+      id
+      image
+      name
+      description
+      price
+    }
+  }
+`;
+
 export default function EnhancedTable() {
 
   const dispatch = useDispatch<TypedDispatch>();
+  const { data, loading, error } = useQuery(BOOKS_QUERY);
+  if (error) console.log("🚀 ~ file: Home.tsx ~ line 32 ~ error", error);
+
   const classes = useStyles();
   const navigation = useNavigate();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const bookList = useSelector((state: any) => state.Book);
+  const {bookList} = useSelector((state: any) => state.Book);
 
   useEffect(() => {
     getBookList();
   }, [])
 
   const getBookList = async () => {
-    const result: any = await dispatch(fetchBook());
-    if (result.type === GET_BOOK_LIST_ERROR) {}
+    if (data && data.books) {
+      dispatch(fetchBook(data.books));
+    }
   }
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -181,7 +198,7 @@ export default function EnhancedTable() {
     navigation(`/update-product`, { state: {type: "update-product", bookData: data} });
   }
   const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - bookList.bookList.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - bookList.length) : 0;
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -198,7 +215,7 @@ export default function EnhancedTable() {
           >
             <EnhancedTableHead />
             <TableBody>
-              {bookList.bookList.slice().sort()
+              {bookList.slice().sort()
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row: any, index: number) => {
                   const labelId = `enhanced-table-checkbox-${index}`;
@@ -241,13 +258,14 @@ export default function EnhancedTable() {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={bookList.bookList.length}
+          count={bookList.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
+      <Loader loading={loading}/>
     </Box>
   );
 }

@@ -37,19 +37,18 @@ const Navbar: FC = (): ReactElement => {
   const [navRoutes, setRoutes] = useState(routes);
   const classes = useStyles();
 
-  const user = useSelector((state: any) => state.User);
+  const {user, token} = useSelector((state: any) => state.User);
 
   useEffect(() => {
     filterRoute()
-  }, [user]);
+  }, [token]);
 
   const filterRoute = () => {
-    let token = user.token;
     if(!token) {
       let filteredRoute = navRoutes.filter(data => data.type.includes('auth'));
       setRoutes(filteredRoute);
     } else {
-      let filteredRoute = navRoutes.filter(data => data.type.includes(user.user.role === 'admin' ? 'admin' : 'user')).filter(x => x.path !== window.location.pathname);
+      let filteredRoute = navRoutes.filter(data => data.type.includes(user.role === 'admin' ? 'admin' : 'user')).filter(x => x.path !== window.location.pathname);
       setRoutes(filteredRoute);
     }
   }
@@ -162,7 +161,7 @@ const Navbar: FC = (): ReactElement => {
               ))}
               </ButtonGroup>
               <CartButton />
-              { user.token && <LogoutButton />}
+              { token && <LogoutButton />}
             </Box>
           </Box>
         </Toolbar>

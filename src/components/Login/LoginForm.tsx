@@ -2,18 +2,19 @@ import React, {ReactElement, FC} from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
+import { useMutation, gql } from "@apollo/client";
 
 import {
   Typography,
   Divider,
   InputLabel, TextField,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 
-import {loginUser} from '../../redux/action/user';
+import {setLoginUser} from '../../redux/action/user';
 import {TypedDispatch} from '../../redux/store/store';
-import { LOGIN_USER_ERROR } from '../../utils/constant';
 
 const useStyle = makeStyles(() => ({
   listStyle: {
@@ -44,6 +45,22 @@ type authDataType = {
   password: string,
 }
 
+const USERLOGIN_QUERY = gql`
+  mutation loginUser($email: String, $password: String) {
+  loginUser(
+    email: $email,
+    password: $password,
+  ) {
+    id
+    token
+    firstname
+    lastname
+    email
+    role
+  }
+}
+`;
+
 const validate = (values: authDataType) => {
   let errors: authDataType = {
     email: '',
@@ -67,14 +84,15 @@ const validate = (values: authDataType) => {
 const Login: FC<any> = (): ReactElement => {
 
   const dispatch = useDispatch<TypedDispatch>();
+  const [loginUser, { data, loading, error }] = useMutation(USERLOGIN_QUERY);
+  if (error) console.log("🚀 ~ file: LoginForm.tsx ~ line 92 ~ handlelogin ~ error", error)
+
   const classes = useStyle();
   const navigate = useNavigate();
   
   const handlelogin = async(values: authDataType) => {
     validate(values);
-    const result: any = await dispatch(loginUser(values));
-    if (result.type === LOGIN_USER_ERROR) {}
-    navigate('/');
+    loginUser({ variables: values})
   }
   
   const formik = useFormik({
@@ -83,8 +101,12 @@ const Login: FC<any> = (): ReactElement => {
       password: ''
     },
     onSubmit: async values => handlelogin(values),
-    // validate: values => validate(values),
   });
+
+  if (data && data.loginUser) {
+    dispatch(setLoginUser(data.loginUser));
+    navigate('/');
+  }
 
     return (
       <form onSubmit={formik.handleSubmit}>
@@ -129,6 +151,7 @@ const Login: FC<any> = (): ReactElement => {
             type="submit"
             className={classes.loginStyle}>
             Login
+            {loading && <CircularProgress color="inherit" />}
           </Button>
         </div>
       </form>

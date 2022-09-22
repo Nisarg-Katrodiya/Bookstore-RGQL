@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, {ReactElement, FC, useEffect} from "react";
 import { useDispatch, useSelector } from 'react-redux';
+import { useQuery, gql } from "@apollo/client";
 
 import {Typography, Stack, Container} from "@mui/material";
 
@@ -10,28 +11,45 @@ import {
 } from '../components/Dashboard/Products';
 
 import {TypedDispatch} from '../redux/store/store';
+// import { fetchCart } from '../redux/action/cart';
 import { fetchBook } from '../redux/action/book';
-import { fetchCart } from '../redux/action/cart';
-import { GET_BOOK_LIST_ERROR } from '../utils/constant';
+import Loader from '../components/Loader';
+
+const BOOKS_QUERY = gql`
+  query getBooks {
+    books {
+      id
+      image
+      name
+      description
+      price
+    }
+  }
+`;
+
 
 const Home: FC<any> = (): ReactElement => {
 
   const dispatch = useDispatch<TypedDispatch>();
+  const { data, loading, error } = useQuery(BOOKS_QUERY);
+  if (error) console.log("🚀 ~ file: Home.tsx ~ line 32 ~ error", error);
 
-  const book = useSelector((state: any) => state.Book);
+  const {bookList} = useSelector((state: any) => state.Book);
 
   useEffect(() => {
     getBookList();
-    getCart()
+    // getCart();
   }, [])
 
   const getBookList = async () => {
-    const result: any = await dispatch(fetchBook());
-    if (result.type === GET_BOOK_LIST_ERROR) {}
+    if (data && data.books) {
+      dispatch(fetchBook(data.books));
+    }
   }
-  const getCart = async () => {
-    await dispatch(fetchCart());
-  }
+
+  // const getCart = async () => {
+  //   await dispatch(fetchCart());
+  // }
 
 	return (
 		<>
@@ -52,8 +70,9 @@ const Home: FC<any> = (): ReactElement => {
           </Stack>
         </Stack>
 
-        <ProductList products={book.bookList} />
+        { !loading && <ProductList products={bookList} />}
       </Container>
+      <Loader loading={loading}/>
 		</>
 	);
 };
