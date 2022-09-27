@@ -51,7 +51,7 @@ const addBookRequest = () => ({ type: ADD_BOOK_REQUEST });
 const addBookSuccess = (payload: any) => ({ type: ADD_BOOK_SUCCESS, payload });
 const addBookFailure = (message: string) => ({ type: ADD_BOOK_ERROR, message });
 
-export const addBook = (bookData: any) => (dispatch: any) => 
+export const createBook = (bookData: any) => (dispatch: any) => 
   new Promise((resolve: any, reject: any) => {
     dispatch(addBookRequest());
     apiInstance

@@ -39,7 +39,7 @@ const Home: FC<any> = (): ReactElement => {
   useEffect(() => {
     getBookList();
     // getCart();
-  }, [])
+  }, [data])
 
   const getBookList = async () => {
     if (data && data.books) {

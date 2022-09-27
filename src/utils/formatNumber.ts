@@ -22,3 +22,13 @@ export function fShortenNumber(number: number) {
 export function fData(number: number) {
   return numeral(number).format('0.0 b');
 }
+
+export function generateGUID() {
+  function S4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+
+  return S4() + S4();
+}

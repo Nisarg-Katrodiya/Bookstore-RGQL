@@ -2,6 +2,9 @@ import React, {ReactElement, FC, useEffect, useState, useCallback} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from 'react-redux';
 
+import { useMutation, gql } from "@apollo/client";
+import { generateGUID } from '../utils/formatNumber';
+
 import { 
   Grid, 
   Box, 
@@ -15,8 +18,8 @@ import { styled } from '@mui/material/styles';
 import { makeStyles } from "@mui/styles";
 
 import {TypedDispatch} from '../redux/store/store';
-import { addBook, updateBook } from '../redux/action/book';
-import { ADD_BOOK_ERROR, UPDATE_BOOK_ERROR } from '../utils/constant';
+// import { createBook, updateBook } from '../redux/action/book';
+// import { ADD_BOOK_ERROR, UPDATE_BOOK_ERROR } from '../utils/constant';
 
 
 const Item = styled(Paper)(({ theme }: any) => ({
@@ -80,29 +83,48 @@ const useStyle = makeStyles(() => ({
   }
 }));
 
+const ADDPRODUCT_QUERY = gql`
+mutation addBook($image: String!, $name: String!, $category: String!, $price: Int!, $user: ID!) {
+  addBook(image: $image, name: $name, category: $category, price: $price, user: $user) {
+    id
+    image
+    name
+    category
+    description
+    price
+  }
+}
+`;
+
 type formDataType = {
   id?: string,
   name: string,
   price: number,
   category: string | null,
   description: string,
-  uploadFile?: any
+  image?: any
+  user?: string
 }
 
 const ProductPage: FC<any> = (): ReactElement => {
 
   const dispatch = useDispatch<TypedDispatch>();
+  const [addBook, { data, loading, error }] = useMutation(ADDPRODUCT_QUERY);
+  if (error) console.log("🚀 ~ file: ProductPage.tsx ~ line 112 ~ error", error);
   const classes = useStyle();
   const navigate = useNavigate();
   const {state}: any = useLocation();
 
   const [pageName, setPageName] = useState('Add');
+	const [selectedFile, setSelectedFile] = useState(null);
+
   const [formData, setFormData] = useState<formDataType>({
+    image: '',
     name: '',
-    price: 0,
     category: '',
     description: '',
-    uploadFile: ''
+    price: 0,
+    user: ''
   });
 
   useEffect(() => {
@@ -115,45 +137,47 @@ const ProductPage: FC<any> = (): ReactElement => {
         price: bookData['price'],
         category: bookData['category'],
         description: bookData['description'],
-        uploadFile: bookData['image']
+        image: bookData['image']
       })
     }
   }, [state]);
 
   const handleSave = async() => {
-    const bookData = new FormData();
-
-    bookData.append('image', formData.uploadFile);
-    bookData.append('name', formData.name);
-    bookData.append('category', formData.category || '');
-    bookData.append('description', formData.description);
-    bookData.append('price', formData.price.toString());
-
     if (state?.type !== 'update-product') {
-      const result: any = await dispatch(addBook(bookData));
-      if (result.type === ADD_BOOK_ERROR) {}
-      setFormData({
-        ...formData,
-        name: '',
-        price: 0,
-        category: '',
-        description: '',
-        uploadFile: ''
-      });
-    } else {
-      bookData.append('id', state?.bookData?.id)
-      const result: any = await dispatch(updateBook(bookData));
-      if (result.type === UPDATE_BOOK_ERROR) {
-        setFormData({
-          ...formData,
-          name: '',
-          price: 0,
-          category: '',
-          description: '',
-          uploadFile: ''
-        });
-      }
-    }
+      console.log("🚀 ~ file: ProductPage.tsx ~ line 155 ~ handleSave ~ formData", formData)
+      // const result: any = await dispatch(createBook(bookData));
+      // if (result.type === ADD_BOOK_ERROR) {}
+      addBook({
+        variables: formData
+      })
+
+      // setFormData({
+      //   ...formData,
+      //   name: '',
+      //   price: 0,
+      //   category: '',
+      //   description: '',
+      //   image: ''
+      // });
+    } 
+    // else {
+      // bookData.append('id', state?.bookData?.id)
+      // const result: any = await dispatch(updateBook(bookData));
+      // if (result.type === UPDATE_BOOK_ERROR) {
+      //   setFormData({
+      //     ...formData,
+      //     name: '',
+      //     price: 0,
+      //     category: '',
+      //     description: '',
+      //     image: ''
+      //   });
+      // }
+    // }
+  }
+
+  if (data && data.book) {
+    console.log("🚀 ~ file: ProductPage.tsx ~ line 112 ~ data", data);
     navigate('/products');
   }
 
@@ -169,12 +193,39 @@ const ProductPage: FC<any> = (): ReactElement => {
     setFormData({...formData, category: values});
   }, [formData]);
 
-  const uploadSingleFile = (e: any)  =>{
-    setFormData({
-      ...formData,
-      uploadFile: e.target.files[0],
-    });
-  };
+  function readFileAsync(data: any) {
+    return new Promise((resolve, reject) => {
+      const file = data;
+      if (!file) {
+        return;
+      }
+      const reader: any = new FileReader();
+
+      reader.onload = () => {
+        resolve({
+          id: generateGUID(),
+          url: `data:${file.type};base64,${btoa(reader.result)}`,
+          type: 'image'
+        });
+      };
+
+      reader.onerror = reject;
+      reader.readAsBinaryString(file);
+      console.log("🚀 ~ file: ProductPage.tsx ~ line 217 ~ returnnewPromise ~ reader", reader)
+    })
+  }
+
+  const uploadSingleFile = async (e: any)  =>{
+    // setFormData({
+    //   ...formData,
+    //   image: e.target.files[0],
+    // });
+
+    setSelectedFile(e.target.files[0]);
+    const newImage: any = await readFileAsync(e.target.files[0]);
+    console.log("🚀 ~ file: ProductPage.tsx ~ line 228 ~ uploadSingleFile ~ newImage", newImage)
+    setFormData({...formData, image: newImage.url});
+  }
 
   return (
     <>
